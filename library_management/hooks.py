@@ -4,6 +4,9 @@ app_publisher = "Manish Chand"
 app_description = "Library Management System"
 app_email = "manish2003ban@gmail.com"
 app_license = "mit"
+app_include_css = "/assets/library_management/css/library_management.css"
+app_include_js = "/assets/library_management/js/library_member.js"
+# In apps/library_management/library_management/hooks.py
 
 # Apps
 # ------------------
