@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Gallery - Library Management</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #333;
+            padding-top: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #ff0000 0%, #ff6b6b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-section input,
+        .search-section select {
+            padding: 12px 20px;
+            border: 2px solid #e1e8ed;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .search-section input:focus,
+        .search-section select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn-search {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: white;
+            border: 2px solid #e1e8ed;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .books-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .book-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .book-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .book-image {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .book-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .book-card:hover .book-image::before {
+            opacity: 1;
+        }
+
+        .book-content {
+            padding: 20px;
+        }
+
+        .book-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .book-author {
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .book-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .book-isbn {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .availability {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .unavailable {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .limited {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .btn-borrow {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-borrow:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-borrow:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .empty-state-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 40px 0;
+            flex-wrap: wrap;
+        }
+
+        .pagination button {
+            padding: 10px 15px;
+            border: 2px solid #e1e8ed;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .pagination button:hover,
+        .pagination button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .search-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-section input,
+            .search-section select,
+            .btn-search {
+                width: 100%;
+                min-width: auto;
+                flex: none;
+            }
+
+            .books-grid {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+                gap: 20px;
+            }
+
+            .book-image {
+                height: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>⭐ Book Gallery</h1>
+        <p>Explore our Collection</p>
+    </div>
+
+    <div class="container">
+        <div class="search-section">
+            <input type="text" id="searchInput" placeholder="Search by title, author, or ISBN...">
+            <select id="categoryFilter">
+                <option value="">All Categories</option>
+                <option value="fiction">Fiction</option>
+                <option value="non-fiction">Non-Fiction</option>
+                <option value="science">Science</option>
+                <option value="technology">Technology</option>
+                <option value="history">History</option>
+                <option value="biography">Biography</option>
+            </select>
+            <button class="btn-search" onclick="filterBooks()">Search</button>
+        </div>
+
+        <div class="filters" id="filterContainer">
+            <button class="filter-btn active" onclick="filterByCategory('')">All Books</button>
+            <button class="filter-btn" onclick="filterByCategory('fiction')">Fiction</button>
+            <button class="filter-btn" onclick="filterByCategory('non-fiction')">Non-Fiction</button>
+            <button class="filter-btn" onclick="filterByCategory('science')">Science</button>
+            <button class="filter-btn" onclick="filterByCategory('technology')">Technology</button>
+        </div>
+
+        <div class="books-grid" id="booksGrid">
+            <!-- Books will be dynamically populated here -->
+        </div>
+
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <footer>
+        <p>&copy; 2026 Library Management System. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Sample book data
+        const booksData = [
+            { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald', category: 'fiction', isbn: '978-0743273565', available: 3, total: 5 },
+            { id: 2, title: 'To Kill a Mockingbird', author: 'Harper Lee', category: 'fiction', isbn: '978-0061120084', available: 2, total: 4 },
+            { id: 3, title: 'Sapiens', author: 'Yuval Noah Harari', category: 'non-fiction', isbn: '978-0062316097', available: 0, total: 3 },
+            { id: 4, title: 'A Brief History of Time', author: 'Stephen Hawking', category: 'science', isbn: '978-0553380163', available: 1, total: 2 },
+            { id: 5, title: 'Clean Code', author: 'Robert C. Martin', category: 'technology', isbn: '978-0132350884', available: 4, total: 6 },
+            { id: 6, title: 'The Selfish Gene', author: 'Richard Dawkins', category: 'science', isbn: '978-0199291151', available: 2, total: 3 },
+            { id: 7, title: '1984', author: 'George Orwell', category: 'fiction', isbn: '978-0451524935', available: 5, total: 7 },
+            { id: 8, title: 'The Innovators', author: 'Walter Isaacson', category: 'biography', isbn: '978-1476708690', available: 1, total: 2 },
+            { id: 9, title: 'Python Crash Course', author: 'Eric Matthes', category: 'technology', isbn: '978-1593275105', available: 3, total: 5 },
+            { id: 10, title: 'Educated', author: 'Tara Westover', category: 'biography', isbn: '978-0399590504', available: 0, total: 2 },
+            { id: 11, title: 'Pride and Prejudice', author: 'Jane Austen', category: 'fiction', isbn: '978-0141439518', available: 2, total: 4 },
+            { id: 12, title: 'The Elegant Universe', author: 'Brian Greene', category: 'science', isbn: '978-0393347517', available: 1, total: 2 }
+        ];
+
+        const itemsPerPage = 12;
+        let currentPage = 1;
+        let filteredBooks = [...booksData];
+
+        function renderBooks() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const booksToShow = filteredBooks.slice(start, end);
+
+            const grid = document.getElementById('booksGrid');
+            if (booksToShow.length === 0) {
+                grid.innerHTML = `
+                    <div style="grid-column: 1/-1;">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <h2>No Books Found</h2>
+                            <p>Try adjusting your search or filter criteria</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = booksToShow.map(book => `
+                <div class="book-card" onclick="viewBook(${book.id})">
+                    <div class="book-image">📘</div>
+                    <div class="book-content">
+                        <div class="book-title">${book.title}</div>
+                        <div class="book-author">by ${book.author}</div>
+                        <div class="book-meta">
+                            <span class="book-isbn">${book.isbn}</span>
+                            <span>${book.available}/${book.total}</span>
+                        </div>
+                        <div class="availability ${book.available > 0 ? (book.available > 2 ? 'available' : 'limited') : 'unavailable'}">
+                            ${book.available > 0 ? '✓ Available' : '✗ Not Available'}
+                        </div>
+                        <button class="btn-borrow" onclick="event.stopPropagation(); borrowBook(${book.id})" ${book.available === 0 ? 'disabled' : ''}>
+                            ${book.available > 0 ? 'Borrow Book' : 'Request Notification'}
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            renderPagination();
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            let paginationHTML = '';
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            if (currentPage > 1) {
+                paginationHTML += `<button onclick="currentPage--; renderBooks();">← Previous</button>`;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `<button onclick="currentPage = ${i}; renderBooks();" ${i === currentPage ? 'class="active"' : ''}>${i}</button>`;
+            }
+
+            if (currentPage < totalPages) {
+                paginationHTML += `<button onclick="currentPage++; renderBooks();">Next →</button>`;
+            }
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function filterByCategory(category) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            filteredBooks = category === '' ? [...booksData] : booksData.filter(book => book.category === category);
+            currentPage = 1;
+            renderBooks();
+        }
+
+        function filterBooks() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const category = document.getElementById('categoryFilter').value;
+
+            filteredBooks = booksData.filter(book => {
+                const matchSearch = book.title.toLowerCase().includes(searchTerm) || 
+                                   book.author.toLowerCase().includes(searchTerm) ||
+                                   book.isbn.includes(searchTerm);
+                const matchCategory = category === '' || book.category === category;
+                return matchSearch && matchCategory;
+            });
+
+            currentPage = 1;
+            renderBooks();
+        }
+
+        function viewBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            alert(`Book: ${book.title}\nAuthor: ${book.author}\nAvailable: ${book.available}/${book.total}`);
+        }
+
+        function borrowBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (book.available > 0) {
+                alert(`Book "${book.title}" added to your cart!\n\nTo complete borrowing, please log in to your member account.`);
+            }
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            renderBooks();
+        });
+
+        // Search on Enter
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') filterBooks();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
