@@ -498,26 +498,574 @@
             alert(`Book: ${book.title}\nAuthor: ${book.author}\nAvailable: ${book.available}/${book.total}`);
         }
 
-        function borrowBook(bookId) {
-            const book = booksData.find(b => b.id === bookId);
-            if (book.available > 0) {
-                alert(`Book "${book.title}" added to your cart!\n\nTo complete borrowing, please log in to your member account.`);
+        // Enhanced book card interactions
+        function addBookCardInteractions() {
+            const cards = document.querySelectorAll('.book-card');
+
+            cards.forEach((card, index) => {
+                // Add staggered animation on load
+                card.style.animationDelay = `${index * 0.1}s`;
+                card.classList.add('fade-in-up');
+
+                // Add click ripple effect
+                card.addEventListener('click', function(e) {
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = (e.offsetX - 10) + 'px';
+                    ripple.style.top = (e.offsetY - 10) + 'px';
+                    ripple.style.width = '20px';
+                    ripple.style.height = '20px';
+                    ripple.style.pointerEvents = 'none';
+
+                    this.appendChild(ripple);
+
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+
+                // Add hover effects
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-15px) scale(1.02)';
+                    this.style.boxShadow = '0 20px 40px rgba(0,0,0,0.3), 0 0 20px rgba(102, 126, 234, 0.2)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                    this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                });
+            });
+        }
+
+        // Enhanced search with debouncing
+        let searchTimeout;
+        function enhancedSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterBooks();
+                showSearchFeedback();
+            }, 300);
+        }
+
+        function showSearchFeedback() {
+            const searchInput = document.getElementById('searchInput');
+            const feedback = document.getElementById('searchFeedback') || createSearchFeedback();
+
+            if (searchInput.value.trim()) {
+                const results = filteredBooks.length;
+                feedback.textContent = `Found ${results} book${results !== 1 ? 's' : ''} matching "${searchInput.value}"`;
+                feedback.className = 'search-feedback success';
+                feedback.style.display = 'block';
+            } else {
+                feedback.style.display = 'none';
             }
         }
 
-        // Initialize
+        function createSearchFeedback() {
+            const feedback = document.createElement('div');
+            feedback.id = 'searchFeedback';
+            feedback.style.cssText = `
+                margin-top: 10px;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 0.9em;
+                font-weight: 600;
+                text-align: center;
+            `;
+            document.querySelector('.search-section').appendChild(feedback);
+            return feedback;
+        }
+
+        // Enhanced book modal
+        function viewBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book) return;
+
+            const modal = createBookModal(book);
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+
+            // Animate modal entrance
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.animation = 'modalSlideIn 0.3s ease-out';
+        }
+
+        function createBookModal(book) {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.innerHTML = `
+                <div class="modal-content book-modal">
+                    <div class="modal-header">
+                        <h2>${book.title}</h2>
+                        <span class="close" onclick="closeModal(this.closest('.modal'))">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div class="book-details">
+                            <div class="book-cover-large">📖</div>
+                            <div class="book-info">
+                                <p><strong>Author:</strong> ${book.author}</p>
+                                <p><strong>Category:</strong> ${book.category.charAt(0).toUpperCase() + book.category.slice(1)}</p>
+                                <p><strong>ISBN:</strong> ${book.isbn}</p>
+                                <p><strong>Availability:</strong> ${book.available}/${book.total} copies</p>
+                                <div class="availability ${book.available > 0 ? (book.available > 2 ? 'available' : 'limited') : 'unavailable'}">
+                                    ${book.available > 0 ? '✓ Available for borrowing' : '✗ Currently unavailable'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-actions">
+                            <button class="btn-borrow-large" onclick="borrowBook(${book.id})" ${book.available === 0 ? 'disabled' : ''}>
+                                ${book.available > 0 ? '📚 Borrow This Book' : '🔔 Request Notification'}
+                            </button>
+                            <button class="btn-secondary" onclick="addToWishlist(${book.id})">❤️ Add to Wishlist</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+
+            return modal;
+        }
+
+        function closeModal(modal) {
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.animation = 'modalSlideOut 0.3s ease-out';
+
+            setTimeout(() => {
+                modal.remove();
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+
+        // Enhanced borrow functionality
+        function borrowBook(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            if (!book || book.available === 0) return;
+
+            // Show loading state
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '⏳ Processing...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                // Simulate successful borrowing
+                book.available--;
+                showNotification(`✅ "${book.title}" has been added to your borrowed books!`, 'success');
+                button.textContent = originalText;
+                button.disabled = false;
+
+                // Update the UI
+                renderBooks();
+
+                // Close modal if open
+                const modal = button.closest('.modal');
+                if (modal) {
+                    closeModal(modal);
+                }
+            }, 1500);
+        }
+
+        // Add to wishlist functionality
+        function addToWishlist(bookId) {
+            const book = booksData.find(b => b.id === bookId);
+            showNotification(`❤️ "${book.title}" added to your wishlist!`, 'info');
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 10);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Enhanced pagination with smooth scrolling
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredBooks.length / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            let paginationHTML = '';
+
+            if (totalPages <= 1) {
+                pagination.innerHTML = '';
+                return;
+            }
+
+            // Previous button
+            if (currentPage > 1) {
+                paginationHTML += `<button onclick="changePage(${currentPage - 1})" class="pagination-btn">← Previous</button>`;
+            }
+
+            // Page numbers with smart display
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            if (startPage > 1) {
+                paginationHTML += `<button onclick="changePage(1)" class="pagination-btn">1</button>`;
+                if (startPage > 2) {
+                    paginationHTML += `<span class="pagination-dots">...</span>`;
+                }
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                paginationHTML += `<button onclick="changePage(${i})" class="pagination-btn ${i === currentPage ? 'active' : ''}">${i}</button>`;
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    paginationHTML += `<span class="pagination-dots">...</span>`;
+                }
+                paginationHTML += `<button onclick="changePage(${totalPages})" class="pagination-btn">${totalPages}</button>`;
+            }
+
+            // Next button
+            if (currentPage < totalPages) {
+                paginationHTML += `<button onclick="changePage(${currentPage + 1})" class="pagination-btn">Next →</button>`;
+            }
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderBooks();
+            // Smooth scroll to top of results
+            document.querySelector('.books-grid').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Enhanced filter buttons with animations
+        function filterByCategory(category) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.transform = 'scale(1)';
+            });
+
+            event.target.classList.add('active');
+            event.target.style.transform = 'scale(1.05)';
+
+            filteredBooks = category === '' ? [...booksData] : booksData.filter(book => book.category === category);
+            currentPage = 1;
+            renderBooks();
+
+            // Add filter feedback
+            const categoryName = category === '' ? 'All Books' : category.charAt(0).toUpperCase() + category.slice(1);
+            showNotification(`📚 Showing ${categoryName} (${filteredBooks.length} books)`, 'info');
+        }
+
+        // Enhanced search with real-time feedback
+        function filterBooks() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            const category = document.getElementById('categoryFilter').value;
+
+            filteredBooks = booksData.filter(book => {
+                const matchSearch = !searchTerm ||
+                    book.title.toLowerCase().includes(searchTerm) ||
+                    book.author.toLowerCase().includes(searchTerm) ||
+                    book.isbn.includes(searchTerm);
+                const matchCategory = category === '' || book.category === category;
+                return matchSearch && matchCategory;
+            });
+
+            currentPage = 1;
+            renderBooks();
+            showSearchFeedback();
+        }
+
+        // Add loading animation for book cards
+        function addLoadingAnimation() {
+            const cards = document.querySelectorAll('.book-card');
+            cards.forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+            });
+
+            setTimeout(() => {
+                cards.forEach(card => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                });
+            }, 100);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .fade-in-up {
+                animation: fadeInUp 0.6s ease-out forwards;
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes modalSlideOut {
+                from {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.7);
+                backdrop-filter: blur(5px);
+            }
+
+            .modal-content {
+                background-color: white;
+                margin: 5% auto;
+                padding: 0;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 600px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            }
+
+            .modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px 12px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .modal-header h2 {
+                margin: 0;
+                font-size: 1.5em;
+            }
+
+            .close {
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .close:hover {
+                color: #ff6b6b;
+            }
+
+            .modal-body {
+                padding: 30px;
+            }
+
+            .book-details {
+                display: flex;
+                gap: 30px;
+                margin-bottom: 30px;
+            }
+
+            .book-cover-large {
+                font-size: 6em;
+                flex-shrink: 0;
+            }
+
+            .book-info p {
+                margin: 10px 0;
+                font-size: 1.1em;
+            }
+
+            .modal-actions {
+                display: flex;
+                gap: 15px;
+                flex-wrap: wrap;
+            }
+
+            .btn-borrow-large, .btn-secondary {
+                flex: 1;
+                padding: 15px 20px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-size: 1em;
+            }
+
+            .btn-borrow-large {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .btn-borrow-large:hover:not(:disabled) {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .btn-secondary {
+                background: #f8f9fa;
+                color: #6c757d;
+                border: 2px solid #dee2e6;
+            }
+
+            .btn-secondary:hover {
+                background: #e9ecef;
+                border-color: #adb5bd;
+            }
+
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 8px;
+                padding: 15px 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                z-index: 1001;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                min-width: 300px;
+            }
+
+            .notification.show {
+                transform: translateX(0);
+            }
+
+            .notification.success {
+                border-left: 4px solid #28a745;
+            }
+
+            .notification.info {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .notification.error {
+                border-left: 4px solid #dc3545;
+            }
+
+            .pagination-dots {
+                padding: 10px;
+                color: #6c757d;
+                user-select: none;
+            }
+
+            .search-feedback {
+                margin-top: 10px;
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 0.9em;
+                font-weight: 600;
+                text-align: center;
+            }
+
+            .search-feedback.success {
+                background: #d4edda;
+                color: #155724;
+            }
+
+            @media (max-width: 768px) {
+                .book-details {
+                    flex-direction: column;
+                    text-align: center;
+                }
+
+                .modal-actions {
+                    flex-direction: column;
+                }
+
+                .btn-borrow-large, .btn-secondary {
+                    width: 100%;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Enhanced initialization
         window.addEventListener('load', () => {
             renderBooks();
+            addBookCardInteractions();
         });
 
-        // Search on Enter
+        // Enhanced search on Enter and real-time search
         document.addEventListener('DOMContentLoaded', () => {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
+                searchInput.addEventListener('input', enhancedSearch);
                 searchInput.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') filterBooks();
+                    if (e.key === 'Enter') {
+                        filterBooks();
+                    }
                 });
             }
+
+            // Add keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                // Ctrl/Cmd + F for search focus
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                    e.preventDefault();
+                    searchInput?.focus();
+                }
+
+                // Escape to clear search
+                if (e.key === 'Escape' && document.activeElement === searchInput) {
+                    searchInput.value = '';
+                    filterBooks();
+                    searchInput.blur();
+                }
+            });
         });
     </script>
 </body>

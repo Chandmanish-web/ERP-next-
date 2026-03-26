@@ -736,37 +736,618 @@
     </footer>
 
     <script>
+        // Enhanced tab switching with animations
         function switchTab(event, tabName) {
-            // Hide all tabs
-            const tabs = document.querySelectorAll('.tab-content');
-            tabs.forEach(tab => tab.classList.remove('active'));
+            const currentTab = document.querySelector('.tab-content.active');
+            const newTab = document.getElementById(tabName);
+
+            if (currentTab === newTab) return;
 
             // Remove active class from all buttons
             const buttons = document.querySelectorAll('.tab');
-            buttons.forEach(btn => btn.classList.remove('active'));
+            buttons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.style.transform = 'scale(1)';
+            });
 
-            // Show selected tab
-            document.getElementById(tabName).classList.add('active');
+            // Add active class to clicked button with animation
             event.target.classList.add('active');
+            event.target.style.transform = 'scale(1.05)';
+
+            // Animate tab transition
+            currentTab.style.animation = 'fadeOut 0.2s ease-out';
+            setTimeout(() => {
+                currentTab.classList.remove('active');
+                newTab.classList.add('active');
+                newTab.style.animation = 'fadeIn 0.3s ease-out';
+            }, 200);
+
+            // Update URL hash for bookmarking
+            window.location.hash = tabName;
         }
 
+        // Enhanced book actions with confirmations and feedback
         function returnBook(title) {
-            alert(`Returning "${title}"\n\nThank you! The book will be marked as returned.`);
+            const modal = createConfirmationModal(
+                'Return Book',
+                `Are you sure you want to return "${title}"?`,
+                () => {
+                    showNotification(`✅ "${title}" has been returned successfully!`, 'success');
+                    // Simulate removing the book from borrowed list
+                    const bookItem = event.target.closest('.book-item');
+                    bookItem.style.animation = 'slideOutLeft 0.5s ease-out';
+                    setTimeout(() => {
+                        bookItem.remove();
+                        updateStats();
+                        checkEmptyState();
+                    }, 500);
+                },
+                'Return Book',
+                'Cancel'
+            );
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
         }
 
         function renewBook(title) {
-            alert(`Renewing "${title}"\n\nYour loan period has been extended by 14 days.`);
+            const modal = createConfirmationModal(
+                'Renew Book',
+                `Renew "${title}" for another 14 days?`,
+                () => {
+                    showNotification(`🔄 "${title}" has been renewed for 14 more days!`, 'info');
+                    // Update the due date display
+                    const bookItem = event.target.closest('.book-item');
+                    const dueDateElement = bookItem.querySelector('.due-date');
+                    const currentDate = new Date();
+                    currentDate.setDate(currentDate.getDate() + 14);
+                    const newDueDate = currentDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    dueDateElement.textContent = newDueDate;
+                    dueDateElement.className = 'due-date available-time';
+                },
+                'Renew Book',
+                'Cancel'
+            );
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
         }
 
+        // Enhanced settings with validation
         function saveSettings() {
-            alert('Settings saved successfully! ✓');
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '⏳ Saving...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+                showNotification('✅ Settings saved successfully!', 'success');
+
+                // Apply theme changes
+                const theme = document.querySelector('select').value;
+                applyTheme(theme);
+            }, 1500);
         }
 
+        function applyTheme(theme) {
+            const body = document.body;
+            body.classList.remove('light-theme', 'dark-theme', 'auto-theme');
+            body.classList.add(`${theme.toLowerCase()}-theme`);
+
+            // Store preference
+            localStorage.setItem('library-theme', theme);
+        }
+
+        // Enhanced logout with animation
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = '/';
+            const modal = createConfirmationModal(
+                'Logout',
+                'Are you sure you want to logout?',
+                () => {
+                    // Add logout animation
+                    document.body.style.animation = 'fadeOut 0.5s ease-out';
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 500);
+                },
+                'Logout',
+                'Stay Logged In'
+            );
+            document.body.appendChild(modal);
+            modal.style.display = 'block';
+        }
+
+        // Modal creation utility
+        function createConfirmationModal(title, message, onConfirm, confirmText = 'Confirm', cancelText = 'Cancel') {
+            const modal = document.createElement('div');
+            modal.className = 'modal confirmation-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>${title}</h3>
+                        <span class="close" onclick="closeModal(this.closest('.modal'))">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p style="font-size: 1.1em; margin: 20px 0;">${message}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-cancel" onclick="closeModal(this.closest('.modal'))">${cancelText}</button>
+                        <button class="btn-confirm" onclick="handleConfirm(this.closest('.modal'))">${confirmText}</button>
+                    </div>
+                </div>
+            `;
+
+            // Store the confirm callback
+            modal.confirmCallback = onConfirm;
+
+            // Close on outside click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    closeModal(modal);
+                }
+            });
+
+            return modal;
+        }
+
+        function handleConfirm(modal) {
+            if (modal.confirmCallback) {
+                modal.confirmCallback();
+            }
+            closeModal(modal);
+        }
+
+        function closeModal(modal) {
+            modal.style.animation = 'modalFadeOut 0.3s ease-out';
+            setTimeout(() => {
+                modal.remove();
+            }, 300);
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()">×</button>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 10);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 5000);
+        }
+
+        // Update statistics dynamically
+        function updateStats() {
+            const borrowedBooks = document.querySelectorAll('.book-item').length;
+            const statsBoxes = document.querySelectorAll('.stat-box');
+
+            if (statsBoxes[0]) {
+                statsBoxes[0].querySelector('.stat-number').textContent = borrowedBooks;
+            }
+
+            // Update welcome message
+            const welcomeText = document.querySelector('.welcome-text p');
+            const dueSoonCount = document.querySelectorAll('.due-soon').length;
+            welcomeText.innerHTML = `You have <strong>${borrowedBooks} book${borrowedBooks !== 1 ? 's' : ''}</strong> currently borrowed.${dueSoonCount > 0 ? ` Due date for ${dueSoonCount} book${dueSoonCount > 1 ? 's' : ''} is within 2 days.` : ''}`;
+        }
+
+        // Check for empty state
+        function checkEmptyState() {
+            const borrowedTab = document.getElementById('borrowed');
+            const books = borrowedTab.querySelectorAll('.book-item');
+
+            if (books.length === 0) {
+                borrowedTab.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📚</div>
+                        <h3>No Books Currently Borrowed</h3>
+                        <p>You haven't borrowed any books yet. Start exploring our collection!</p>
+                        <button class="btn-explore" onclick="window.location.href='/books'">Explore Books</button>
+                    </div>
+                `;
             }
         }
+
+        // Enhanced interactions for book items
+        function addBookItemInteractions() {
+            const bookItems = document.querySelectorAll('.book-item');
+
+            bookItems.forEach((item, index) => {
+                // Add staggered animation on load
+                item.style.animationDelay = `${index * 0.1}s`;
+                item.classList.add('slide-in-right');
+
+                // Add hover effects
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-8px) scale(1.02)';
+                    this.style.boxShadow = '0 15px 35px rgba(0,0,0,0.2), 0 0 20px rgba(102, 126, 234, 0.1)';
+                });
+
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                    this.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+                });
+
+                // Add click ripple effect to buttons
+                const buttons = item.querySelectorAll('.btn');
+                buttons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        const ripple = document.createElement('div');
+                        ripple.style.position = 'absolute';
+                        ripple.style.borderRadius = '50%';
+                        ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+                        ripple.style.transform = 'scale(0)';
+                        ripple.style.animation = 'ripple 0.6s linear';
+                        ripple.style.left = (e.offsetX - 10) + 'px';
+                        ripple.style.top = (e.offsetY - 10) + 'px';
+                        ripple.style.width = '20px';
+                        ripple.style.height = '20px';
+                        ripple.style.pointerEvents = 'none';
+
+                        this.appendChild(ripple);
+
+                        setTimeout(() => {
+                            ripple.remove();
+                        }, 600);
+                    });
+                });
+            });
+        }
+
+        // Enhanced stat boxes with animations
+        function animateStatBoxes() {
+            const statBoxes = document.querySelectorAll('.stat-box');
+
+            statBoxes.forEach((box, index) => {
+                box.style.animationDelay = `${index * 0.2}s`;
+                box.classList.add('bounce-in');
+
+                // Add click animation
+                box.addEventListener('click', function() {
+                    this.style.animation = 'pulse 0.6s ease-out';
+                    setTimeout(() => {
+                        this.style.animation = '';
+                    }, 600);
+                });
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + number for tabs
+            if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '4') {
+                e.preventDefault();
+                const tabs = ['borrowed', 'transaction', 'profile', 'settings'];
+                const tabIndex = parseInt(e.key) - 1;
+                const tabButton = document.querySelectorAll('.tab')[tabIndex];
+                if (tabButton) {
+                    switchTab({ target: tabButton }, tabs[tabIndex]);
+                }
+            }
+
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                const openModals = document.querySelectorAll('.modal[style*="display: block"]');
+                openModals.forEach(modal => closeModal(modal));
+            }
+        });
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            .slide-in-right {
+                animation: slideInRight 0.6s ease-out forwards;
+                opacity: 0;
+                transform: translateX(30px);
+            }
+
+            .bounce-in {
+                animation: bounceIn 0.8s ease-out forwards;
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            @keyframes slideInRight {
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            @keyframes bounceIn {
+                0% { opacity: 0; transform: scale(0.3); }
+                50% { opacity: 1; transform: scale(1.05); }
+                70% { transform: scale(0.9); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+
+            @keyframes slideOutLeft {
+                to {
+                    opacity: 0;
+                    transform: translateX(-100%);
+                }
+            }
+
+            @keyframes fadeOut {
+                to {
+                    opacity: 0;
+                    transform: translateY(-10px);
+                }
+            }
+
+            @keyframes modalFadeOut {
+                to {
+                    opacity: 0;
+                    transform: scale(0.9);
+                }
+            }
+
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1000;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0,0,0,0.7);
+                backdrop-filter: blur(5px);
+                animation: modalFadeIn 0.3s ease-out;
+            }
+
+            @keyframes modalFadeIn {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .modal-content {
+                background-color: white;
+                margin: 10% auto;
+                padding: 0;
+                border-radius: 12px;
+                width: 90%;
+                max-width: 500px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+                animation: modalSlideIn 0.3s ease-out;
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            .modal-header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 20px;
+                border-radius: 12px 12px 0 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .modal-header h3 {
+                margin: 0;
+                font-size: 1.3em;
+            }
+
+            .close {
+                font-size: 28px;
+                font-weight: bold;
+                cursor: pointer;
+                transition: color 0.3s ease;
+            }
+
+            .close:hover {
+                color: #ff6b6b;
+            }
+
+            .modal-body {
+                padding: 30px;
+                text-align: center;
+            }
+
+            .modal-footer {
+                padding: 20px 30px 30px;
+                display: flex;
+                gap: 15px;
+                justify-content: flex-end;
+            }
+
+            .btn-cancel, .btn-confirm {
+                padding: 12px 24px;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                font-size: 1em;
+            }
+
+            .btn-cancel {
+                background: #f8f9fa;
+                color: #6c757d;
+                border: 2px solid #dee2e6;
+            }
+
+            .btn-cancel:hover {
+                background: #e9ecef;
+                border-color: #adb5bd;
+            }
+
+            .btn-confirm {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+            }
+
+            .btn-confirm:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            .notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: white;
+                border-radius: 8px;
+                padding: 15px 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+                z-index: 1001;
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                min-width: 300px;
+            }
+
+            .notification.show {
+                transform: translateX(0);
+            }
+
+            .notification.success {
+                border-left: 4px solid #28a745;
+            }
+
+            .notification.info {
+                border-left: 4px solid #17a2b8;
+            }
+
+            .notification.error {
+                border-left: 4px solid #dc3545;
+            }
+
+            .light-theme {
+                background: #ffffff;
+                color: #333;
+            }
+
+            .dark-theme {
+                background: #1a1a1a;
+                color: #ffffff;
+            }
+
+            .dark-theme .navbar,
+            .dark-theme .welcome-section,
+            .dark-theme .book-item,
+            .dark-theme .transaction-table,
+            .dark-theme .profile-section {
+                background: #2d2d2d;
+                color: #ffffff;
+            }
+
+            .dark-theme .tab.active {
+                color: #667eea;
+            }
+
+            .auto-theme {
+                /* Will be determined by system preference */
+            }
+
+            @media (prefers-color-scheme: dark) {
+                .auto-theme {
+                    background: #1a1a1a;
+                    color: #ffffff;
+                }
+
+                .auto-theme .navbar,
+                .auto-theme .welcome-section,
+                .auto-theme .book-item,
+                .auto-theme .transaction-table,
+                .auto-theme .profile-section {
+                    background: #2d2d2d;
+                    color: #ffffff;
+                }
+            }
+
+            @media (max-width: 768px) {
+                .modal-content {
+                    margin: 20% auto;
+                    width: 95%;
+                }
+
+                .modal-footer {
+                    flex-direction: column;
+                }
+
+                .btn-cancel, .btn-confirm {
+                    width: 100%;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            addBookItemInteractions();
+            animateStatBoxes();
+
+            // Load saved theme
+            const savedTheme = localStorage.getItem('library-theme') || 'Light';
+            applyTheme(savedTheme);
+            document.querySelector('select').value = savedTheme;
+
+            // Check URL hash for initial tab
+            const hash = window.location.hash.substring(1);
+            if (hash && ['borrowed', 'transaction', 'profile', 'settings'].includes(hash)) {
+                const tabButton = Array.from(document.querySelectorAll('.tab')).find(btn =>
+                    btn.getAttribute('onclick').includes(hash)
+                );
+                if (tabButton) {
+                    switchTab({ target: tabButton }, hash);
+                }
+            }
+        });
+
+        // Handle browser back/forward navigation
+        window.addEventListener('hashchange', () => {
+            const hash = window.location.hash.substring(1);
+            if (hash && ['borrowed', 'transaction', 'profile', 'settings'].includes(hash)) {
+                const tabButton = Array.from(document.querySelectorAll('.tab')).find(btn =>
+                    btn.getAttribute('onclick').includes(hash)
+                );
+                if (tabButton) {
+                    switchTab({ target: tabButton }, hash);
+                }
+            }
+        });
     </script>
 </body>
 </html>

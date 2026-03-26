@@ -29,8 +29,34 @@
         .header {
             text-align: center;
             color: white;
+            padding: 60px 20px;
             margin-bottom: 50px;
             animation: slideDown 0.8s ease-out;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,0,0,0.1), rgba(255,0,0,0.05));
+            animation: pulse 3s infinite;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+            animation: bounce 2s infinite;
+            display: inline-block;
         }
 
         .header h1 {
@@ -41,11 +67,34 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: glow 2s ease-in-out infinite alternate;
         }
 
         .header p {
             font-size: 1.2em;
             opacity: 0.9;
+            animation: fadeInUp 1s ease-out 0.5s both;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 5px #ff0000, 0 0 10px #ff0000, 0 0 15px #ff0000; }
+            to { text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 0 0 30px #ff0000; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .features-grid {
@@ -62,27 +111,53 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             transition: all 0.3s ease;
             animation: fadeInUp 0.8s ease-out backwards;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid transparent;
         }
 
-        .feature-card:nth-child(1) { animation-delay: 0.1s; }
-        .feature-card:nth-child(2) { animation-delay: 0.2s; }
-        .feature-card:nth-child(3) { animation-delay: 0.3s; }
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,0,0,0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .feature-card:hover::before {
+            left: 100%;
+        }
 
         .feature-card:hover {
-            transform: translateY(-10px);
+            transform: translateY(-10px) scale(1.02);
             box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+            border-color: #ff0000;
         }
 
         .feature-icon {
             font-size: 3em;
             margin-bottom: 15px;
             display: inline-block;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.2) rotate(10deg);
         }
 
         .feature-card h2 {
             color: #667eea;
             margin-bottom: 10px;
             font-size: 1.5em;
+            transition: color 0.3s ease;
+        }
+
+        .feature-card:hover h2 {
+            color: #ff0000;
         }
 
         .feature-card p {
@@ -107,6 +182,23 @@
             text-decoration: none;
             display: inline-block;
             font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
@@ -161,16 +253,38 @@
             border-radius: 12px;
             text-align: center;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+
+        .stat-card:hover::before {
+            left: 100%;
         }
 
         .stat-card:hover {
-            transform: scale(1.05);
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
 
         .stat-number {
             font-size: 2.5em;
             font-weight: bold;
             margin-bottom: 10px;
+            display: block;
+            animation: countUp 2s ease-out;
         }
 
         .stat-label {
@@ -372,8 +486,11 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⭐ Library Management System</h1>
-            <p>Your Complete Digital Library Solution</p>
+            <div class="header-content">
+                <div class="logo">⭐</div>
+                <h1>Library Management System</h1>
+                <p>Your Complete Digital Library Solution</p>
+            </div>
         </div>
 
         <div class="features-grid">
@@ -527,132 +644,328 @@
     </div>
 
     <script>
-        // Counter Animation
+        // Counter Animation with enhanced features
         function animateCounters() {
             const counters = document.querySelectorAll('[data-counter]');
-            
+            const speed = 200; // The lower the number, the faster the animation
+
             counters.forEach(counter => {
                 const target = parseInt(counter.getAttribute('data-target'));
-                const increment = target / 100;
+                const increment = target / speed;
                 let current = 0;
 
                 const updateCounter = () => {
                     current += increment;
                     if (current < target) {
                         counter.textContent = Math.floor(current);
-                        setTimeout(updateCounter, 30);
+                        setTimeout(updateCounter, 1);
                     } else {
                         counter.textContent = target;
+                        // Add a sparkle effect when counter completes
+                        counter.style.textShadow = '0 0 10px #ff0000, 0 0 20px #ff0000';
+                        setTimeout(() => {
+                            counter.style.textShadow = '';
+                        }, 1000);
                     }
                 };
+
+                // Add click interaction to counters
+                counter.addEventListener('click', () => {
+                    current = 0;
+                    counter.textContent = '0';
+                    updateCounter();
+                });
 
                 updateCounter();
             });
         }
 
-        // Modal Functions
+        // Enhanced Modal Functions
         function openModal(modalId) {
             const modal = document.getElementById(modalId);
             modal.style.display = 'block';
             document.body.style.overflow = 'hidden';
+
+            // Add entrance animation
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.animation = 'modalSlideIn 0.3s ease-out';
+
+            // Add close on escape key
+            document.addEventListener('keydown', handleEscape);
         }
 
         function closeModal(modalId) {
             const modal = document.getElementById(modalId);
-            modal.style.display = 'none';
-            document.body.style.overflow = 'auto';
+            const modalContent = modal.querySelector('.modal-content');
+            modalContent.style.animation = 'modalSlideOut 0.3s ease-out';
+
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }, 300);
+
+            document.removeEventListener('keydown', handleEscape);
         }
 
-        // Close modal when clicking outside
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-                document.body.style.overflow = 'auto';
+        function handleEscape(event) {
+            if (event.key === 'Escape') {
+                const openModals = document.querySelectorAll('.modal[style*="display: block"]');
+                openModals.forEach(modal => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                });
+                document.removeEventListener('keydown', handleEscape);
             }
         }
 
-        // Search Books
+        // Enhanced feature card interactions
+        function addCardInteractions() {
+            const cards = document.querySelectorAll('.feature-card');
+
+            cards.forEach((card, index) => {
+                // Add click ripple effect
+                card.addEventListener('click', function(e) {
+                    const ripple = document.createElement('div');
+                    ripple.style.position = 'absolute';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.background = 'rgba(255, 255, 255, 0.6)';
+                    ripple.style.transform = 'scale(0)';
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    ripple.style.left = (e.offsetX - 10) + 'px';
+                    ripple.style.top = (e.offsetY - 10) + 'px';
+                    ripple.style.width = '20px';
+                    ripple.style.height = '20px';
+
+                    this.appendChild(ripple);
+
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+
+                // Add hover sound effect (visual feedback)
+                card.addEventListener('mouseenter', function() {
+                    this.style.boxShadow = '0 15px 50px rgba(0,0,0,0.3), 0 0 20px rgba(255,0,0,0.2)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.boxShadow = '0 10px 40px rgba(0,0,0,0.2)';
+                });
+            });
+        }
+
+        // Enhanced search functionality
         function searchBooks() {
-            const searchTerm = document.getElementById('bookSearch').value;
-            if (searchTerm.trim() === '') {
-                const messageDiv = document.getElementById('bookMessage');
-                messageDiv.textContent = 'Please enter a search term';
+            const searchTerm = document.getElementById('bookSearch').value.trim();
+            const messageDiv = document.getElementById('bookMessage');
+
+            if (!searchTerm) {
+                messageDiv.textContent = 'Please enter a search term to find books!';
+                messageDiv.style.display = 'block';
+                messageDiv.className = 'error-message';
+                return;
+            }
+
+            // Show loading animation
+            messageDiv.textContent = '🔍 Searching for books...';
+            messageDiv.className = 'success-message';
+            messageDiv.style.display = 'block';
+
+            // Simulate search delay
+            setTimeout(() => {
+                messageDiv.textContent = `Found results for "${searchTerm}"! Redirecting to book catalog...`;
+                messageDiv.className = 'success-message';
+
+                // Redirect after showing results
+                setTimeout(() => {
+                    window.location.href = '/app/book';
+                }, 1500);
+            }, 1000);
+        }
+
+        // Enhanced member login
+        function memberLogin() {
+            const memberId = document.getElementById('memberId').value.trim();
+            const email = document.getElementById('memberEmail').value.trim();
+            const messageDiv = document.getElementById('memberMessage');
+
+            if (!memberId || !email) {
+                messageDiv.textContent = 'Please fill in both Member ID and Email!';
+                messageDiv.className = 'error-message';
                 messageDiv.style.display = 'block';
                 return;
             }
-            
-            const messageDiv = document.getElementById('bookMessage');
-            messageDiv.textContent = `Searching for: "${searchTerm}" - Redirecting to book catalog...`;
-            messageDiv.style.display = 'block';
-            
-            setTimeout(() => {
-                window.location.href = '/app/book';
-            }, 1500);
-        }
 
-        // Member Login
-        function memberLogin() {
-            const memberId = document.getElementById('memberId').value;
-            const email = document.getElementById('memberEmail').value;
-
-            if (!memberId || !email) {
-                alert('Please fill in all fields');
+            // Validate email format
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                messageDiv.textContent = 'Please enter a valid email address!';
+                messageDiv.className = 'error-message';
+                messageDiv.style.display = 'block';
                 return;
             }
 
-            const messageDiv = document.getElementById('memberMessage');
-            messageDiv.textContent = 'Logging in... Redirecting to your dashboard.';
+            messageDiv.textContent = '🔐 Verifying credentials...';
+            messageDiv.className = 'success-message';
             messageDiv.style.display = 'block';
 
             setTimeout(() => {
-                window.location.href = '/app/library-member';
+                messageDiv.textContent = '✅ Login successful! Redirecting to your dashboard.';
+                setTimeout(() => {
+                    window.location.href = '/app/library-member';
+                }, 1000);
             }, 1500);
         }
 
-        // Register Member
+        // Enhanced member registration
         function registerMember() {
-            const firstName = document.getElementById('firstName').value;
-            const lastName = document.getElementById('lastName').value;
-            const email = document.getElementById('registerEmail').value;
-            const phone = document.getElementById('phone').value;
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const phone = document.getElementById('phone').value.trim();
             const membershipType = document.getElementById('membershipType').value;
 
+            const errorDiv = document.getElementById('registerError');
+            const successDiv = document.getElementById('registerSuccess');
+
+            // Reset messages
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+
+            // Validation
             if (!firstName || !lastName || !email || !phone) {
-                const errorDiv = document.getElementById('registerError');
-                errorDiv.textContent = 'Please fill in all required fields';
+                errorDiv.textContent = 'All fields are required!';
                 errorDiv.style.display = 'block';
                 return;
             }
 
-            const errorDiv = document.getElementById('registerError');
-            errorDiv.style.display = 'none';
-
-            const successDiv = document.getElementById('registerSuccess');
-            successDiv.textContent = `Welcome ${firstName}! Your registration is being processed. Membership Type: ${membershipType}`;
-            successDiv.style.display = 'block';
-
-            setTimeout(() => {
-                window.location.href = '/app/library-member/new';
-            }, 2000);
-        }
-
-        // User Login
-        function userLogin() {
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-
-            if (!username || !password) {
-                alert('Please enter username and password');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                errorDiv.textContent = 'Please enter a valid email address!';
+                errorDiv.style.display = 'block';
                 return;
             }
 
-            alert('Redirecting to Frappe login...');
-            window.location.href = '/';
+            const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+            if (!phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''))) {
+                errorDiv.textContent = 'Please enter a valid phone number!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            // Show success message
+            successDiv.textContent = `🎉 Welcome ${firstName} ${lastName}! Your ${membershipType} membership is being processed.`;
+            successDiv.style.display = 'block';
+
+            // Simulate processing
+            setTimeout(() => {
+                successDiv.textContent = '📝 Registration complete! Redirecting to member login...';
+                setTimeout(() => {
+                    window.location.href = '/app/library-member/new';
+                }, 1500);
+            }, 2000);
         }
+
+        // Enhanced user login
+        function userLogin() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            if (!username || !password) {
+                alert('🚫 Please enter both username and password!');
+                return;
+            }
+
+            // Show loading
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '🔄 Signing in...';
+            button.disabled = true;
+
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.disabled = false;
+                alert('🔗 Redirecting to Frappe authentication...');
+                window.location.href = '/';
+            }, 1500);
+        }
+
+        // Add ripple effect keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes ripple {
+                to {
+                    transform: scale(4);
+                    opacity: 0;
+                }
+            }
+
+            @keyframes modalSlideIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes modalSlideOut {
+                from {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateY(-50px) scale(0.9);
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         // Initialize on page load
         window.addEventListener('load', () => {
             animateCounters();
+            addCardInteractions();
+
+            // Add smooth scrolling
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+
+            // Add parallax effect to header
+            window.addEventListener('scroll', () => {
+                const scrolled = window.pageYOffset;
+                const header = document.querySelector('.header');
+                if (header) {
+                    header.style.transform = `translateY(${scrolled * 0.5}px)`;
+                }
+            });
+        });
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('bookSearch')?.focus();
+            }
+
+            // Escape to close modals
+            if (e.key === 'Escape') {
+                const openModals = document.querySelectorAll('.modal[style*="display: block"]');
+                openModals.forEach(modal => closeModal(modal.id));
+            }
         });
     </script>
 </body>
