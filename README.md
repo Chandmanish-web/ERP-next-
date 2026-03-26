@@ -44,6 +44,17 @@ After installation, access the app through the Frappe Desk:
    - Choose member and book
    - System validates availability, member status, and updates inventory
 
+#### UI Enhancements
+
+The Library Management app includes modern, responsive CSS styling for an improved user experience:
+
+- **Card-based Layouts**: Forms are displayed in attractive cards with gradients and shadows
+- **Status Indicators**: Color-coded badges for book availability, transaction status, and member types
+- **Interactive Elements**: Hover effects on buttons, images, and table rows
+- **Responsive Design**: Optimized for both desktop and mobile devices
+- **Dark Mode Support**: Automatic dark mode detection and styling
+- **Professional Tables**: Enhanced data tables with better readability
+
 #### Doctypes
 
 - **Library Member**: Member registration and management

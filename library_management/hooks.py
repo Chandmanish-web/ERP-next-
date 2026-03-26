@@ -46,8 +46,12 @@ app_include_js = "/assets/library_management/js/library_member.js"
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
-# doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
+doctype_js = {
+    "Book": "library_management/doctype/book/book.js",
+    "Library Member": "library_management/doctype/library_member/library_member.js",
+    "Book Transaction": "library_management/doctype/book_transaction/book_transaction.js"
+}
+doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 
